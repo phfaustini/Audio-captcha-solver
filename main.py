@@ -1,7 +1,8 @@
 import trim
 import os
-import librosa
 
-for f in os.listdir('./amostras'):
-    filename = './amostras/%s' % f
+diretorio = './fase_1/base_treinamento_I/'
+
+for f in os.listdir(diretorio):
+    filename = os.path.join(diretorio, f)
     audios = trim.trim(filename, './output')
