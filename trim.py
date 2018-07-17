@@ -109,4 +109,4 @@ def trim(filename, output):
         if(np.any(audio)):
             audio_trim, _ = librosa.effects.trim(audio, top_db=24, frame_length=2)
             audio_trim = librosa.util.normalize(audio_trim)
-            librosa.output.write_wav('%s/%s/%d - %s.wav' % (output, labels, i, labels[i]), audio_trim, sr=sr)
+            librosa.output.write_wav('%s/%s/%d-%s.wav' % (output, labels, i, labels[i]), audio_trim, sr=sr)
