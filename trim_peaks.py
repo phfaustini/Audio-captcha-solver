@@ -64,8 +64,8 @@ def trim(filename, output):
         if(i >= len(peaks)):
             continue
         p = peaks[i]
-        left = max(0, p - FOLGA)
-        right = min(p + FOLGA, len(y)-1)
+        left = int(round(max(0, p - FOLGA)))
+        right = int(round(min(p + FOLGA, len(y)-1)))
         audio = y[left:right]
         if(np.any(audio)):
             audio_trim, _ = librosa.effects.trim(audio, top_db=16, frame_length=2)
