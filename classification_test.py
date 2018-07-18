@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-import librosa.display
 import librosa
+import librosa.display
+import matplotlib.pyplot as plt
 from scipy.stats import skew
 from tqdm import tqdm
 tqdm.pandas()
+from sklearn import preprocessing
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -19,12 +20,8 @@ for folder in TRAINING_AUDIO_CAPTCHA_FOLDERS:
     for f in os.listdir(folder):
         TRAINING_AUDIO_FILENAMES.append(folder+'/'+f)
 
-TEST_FOLDER = 'output_teste/'
+TEST_FOLDER = 'output_test/'
 TEST_AUDIO_CAPTCHA_FOLDERS = [TEST_FOLDER+i for i in os.listdir(TEST_FOLDER)]
-#TEST_AUDIO_FILENAMES = [] # -> <number>_<digit>.wav
-#for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
-#    for f in os.listdir(folder):
-#        TEST_AUDIO_FILENAMES.append(folder+'/'+f)
 
 
 def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
@@ -34,7 +31,6 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
         label = audio_filename.split('.')[0].split('-')[-1]
 
         ft1 = librosa.feature.mfcc(data, sr=SAMPLE_RATE, n_mfcc=40)
-        
         npstd = np.std(ft1, axis=1)
         npmedian = np.median(ft1, axis=1)
         delta = np.max(ft1) - np.min(ft1)
@@ -56,8 +52,7 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
 
 
 if __name__ == "__main__":
-
-    X_train = []
+    X_train_raw = []
     y_train = []
     for sample in TRAINING_AUDIO_FILENAMES:
         folder = '/'.join(sample.split('/')[0:2])
@@ -65,9 +60,13 @@ if __name__ == "__main__":
         obj = extract_features(filename, folder)
         d = obj[0:obj.size - 1]
         l = obj[obj.size - 1]
-        X_train.append(d)
+        X_train_raw.append(d)
         y_train.append(l)
 
+    # Normalise
+    std_scale = preprocessing.StandardScaler().fit(X_train_raw) 
+    X_train = std_scale.transform(X_train_raw)
+    
     accuracyNB = 0
     accuracy1NN = 0
     accuracy3NN = 0
@@ -79,9 +78,10 @@ if __name__ == "__main__":
         correctSVM = 0
         for filename in os.listdir(folder):
             obj = extract_features(filename, folder)
-            X_test = [obj[0:obj.size - 1]]
             y_test = obj[obj.size - 1]
-
+            X_test_raw = [obj[0:obj.size - 1]]
+            X_test = std_scale.transform(X_test_raw) # normalise
+            
             gnb = GaussianNB()
             y_pred = gnb.fit(X_train, y_train).predict(X_test)
             if y_pred[0] == y_test:
@@ -115,5 +115,5 @@ if __name__ == "__main__":
     print("Acuracia 1NN = "+str(accuracy1NN / len(TEST_AUDIO_CAPTCHA_FOLDERS)))
     print("Acuracia 3NN = "+str(accuracy3NN / len(TEST_AUDIO_CAPTCHA_FOLDERS)))
     print("Acuracia SVM = "+str(accuracySVM / len(TEST_AUDIO_CAPTCHA_FOLDERS)))
-
+    pass
     
