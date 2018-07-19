@@ -14,7 +14,9 @@ fx = (
     .equalizer(300, db=15.0)
 )
 
-denoise = AudioEffectsChain().lowpass(3000)
+#denoise = AudioEffectsChain().lowpass(3000)
+
+SHOW_PLOTS = False
 
 def remove_until(l, until):
     t = list(l)
@@ -38,22 +40,25 @@ def extract_labels(filename):
 def trim(filename, output):
     y, sr = librosa.load(filename)
 
-    FOLGA = int(sr//1.5)
+    FOLGA = int(sr)
     N_SLICES = 4
 
     y = librosa.to_mono(y)
     y = librosa.util.normalize(y)
     y, indexes = librosa.effects.trim(y, top_db=24, frame_length=2)
     fxy = fx(y)
+    fxy[np.abs(fxy) < 0.5] = 0
 
-    peaks, _ = find_peaks(fxy, height=0.7, distance=sr)
+    peaks, _ = find_peaks(fxy, height=0.5, distance=sr)
     peaks = remove_until(peaks, N_SLICES)
-    peak_times = librosa.samples_to_time(peaks)
 
-    #librosa.display.waveplot(fxy)
-    #librosa.display.waveplot(y)
-    #plt.vlines(peak_times, -1, 1, color='orange', linestyle='--',linewidth=4, alpha=0.9, label='Segment boundaries')
-    #plt.show()
+    if SHOW_PLOTS:
+        peak_times = librosa.samples_to_time(peaks)
+        plt.title(filename)
+        librosa.display.waveplot(fxy)
+        librosa.display.waveplot(y)
+        plt.vlines(peak_times, -1, 1, color='red', linestyle='--',linewidth=8, alpha=0.9, label='Segment boundaries')
+        plt.show()
 
     labels = extract_labels(filename)
 
@@ -68,7 +73,10 @@ def trim(filename, output):
         right = int(round(min(p + FOLGA, len(y)-1)))
         audio = y[left:right]
         if(np.any(audio)):
-            audio_trim, _ = librosa.effects.trim(audio, top_db=16, frame_length=2)
+            _, [l,r] = librosa.effects.trim(audio, top_db=12, frame_length=2)
+            l = int(round(max(0, l - FOLGA//4)))
+            r = int(round(min(r + FOLGA//4, len(y)-1)))
+            audio_trim = audio[l:r]
             audio_trim = librosa.util.normalize(audio_trim)
             librosa.output.write_wav('%s/%s/%d-%s.wav' % (output, labels, i, labels[i]), audio_trim, sr=sr)
 
