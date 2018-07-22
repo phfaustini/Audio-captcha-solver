@@ -5,7 +5,6 @@ from math import fabs
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
-from scipy.stats import skew
 from tqdm import tqdm
 tqdm.pandas()
 from sklearn import preprocessing
@@ -14,6 +13,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from spectrum import get_spectrum
+
 
 SAMPLE_RATE = 44100
 TRAINING_OUTPUT = 'output_training/'
@@ -26,37 +26,59 @@ for folder in TRAINING_AUDIO_CAPTCHA_FOLDERS:
 TEST_OUTPUT = 'output_test/'
 TEST_AUDIO_CAPTCHA_FOLDERS = [TEST_OUTPUT+i for i in os.listdir(TEST_OUTPUT)]
 
+TEST_AUDIO_FILENAMES = [] # -> <number>_<digit>.wav
+for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
+    for f in os.listdir(folder):
+        TEST_AUDIO_FILENAMES.append(folder+'/'+f)
+
 
 def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     data, _ = librosa.core.load(path +'/'+ audio_filename, sr=SAMPLE_RATE)
-    assert _ == SAMPLE_RATE
-    try:
-        label = audio_filename.split('.')[0].split('-')[-1]
 
-        ft1_raw = librosa.feature.mfcc(data, sr=SAMPLE_RATE, n_mfcc=40)
-        
-        ft1 = np.array([list(map(fabs, sublist)) for sublist in ft1_raw]) # Tudo positivo
+    label = audio_filename.split('.')[0].split('-')[-1]
 
-        npstd = np.std(ft1, axis=1)
-        npmedian = np.median(ft1, axis=1)
-        delta = np.max(ft1) - np.min(ft1)
-        ft1_trunc = np.hstack((npmedian, npstd, delta))
+    feature1_raw = librosa.feature.mfcc(data, sr=SAMPLE_RATE, n_mfcc=40)
+    
+    feature1 = np.array([list(map(fabs, sublist)) for sublist in feature1_raw]) # Tudo positivo
 
-        ft2 = librosa.feature.zero_crossing_rate(y=data)
-        ft2_trunc = ft2.size
-        
-        #plt.figure(figsize=(10, 4))
-        #librosa.display.specshow(ft1, x_axis='time')
-        #plt.colorbar()
-        #plt.title(label)
-        #plt.tight_layout()
-        #plt.show()
-        
-        features = pd.Series(np.hstack((ft1_trunc, ft2_trunc, get_spectrum(data), label)))
-        return features
-    except:
-        print('bad file')
-        return pd.Series([0]*210)
+    npstd = np.std(feature1, axis=1)
+    npmedian = np.median(feature1, axis=1)
+    #delta = np.max(feature1) - np.min(feature1) # sem ele melhora
+    feature1_flat = np.hstack((npmedian, npstd))
+
+    feature2 = librosa.feature.zero_crossing_rate(y=data)
+    feature2_flat = feature2.size
+
+    feature3 = librosa.feature.spectral_rolloff(data)
+    feature3_flat = np.hstack((np.median(feature3), np.std(feature3)))
+
+    feature4 = librosa.feature.spectral_centroid(data)
+    feature4_flat = np.hstack((np.median(feature4), np.std(feature4)))
+    
+    feature5 = librosa.feature.spectral_contrast(data)
+    feature5_flat = np.hstack((np.median(feature5), np.std(feature5)))
+
+    feature6 = librosa.feature.spectral_bandwidth(data)
+    feature6_flat = np.hstack((np.median(feature6), np.std(feature6)))
+
+    feature7 = librosa.feature.tonnetz(data)
+    feature7_flat = np.hstack((np.median(feature7), np.std(feature7)))
+
+
+    feature8_flat = get_spectrum(data)
+
+    #plt.figure(figsize=(10, 4))
+    #librosa.display.specshow(feature1, x_axis='time')
+    #plt.colorbar()
+    #plt.title(label)
+    #plt.tight_layout()
+    #plt.show()
+    
+    features = pd.Series(np.hstack((feature1_flat, feature2_flat, feature3_flat, 
+                                    feature4_flat, feature5_flat, feature6_flat, 
+                                    feature7_flat, feature8_flat, label)))
+    return features
+ 
 
 
 def train() -> tuple:
@@ -74,12 +96,14 @@ def train() -> tuple:
     # Normalisar
     std_scale = preprocessing.StandardScaler().fit(X_train_raw) 
     X_train = std_scale.transform(X_train_raw)
-    return X_train, y_train, std_scale
+    return X_train, np.array(y_train), std_scale
 
 
 def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler):
     accuracy1NN = 0
     accuracySVM = 0
+    total1NN = 0
+    totalSVM = 0
     for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
         correct1NN = 0
         correctSVM = 0
@@ -89,23 +113,32 @@ def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data
             X_test_raw = [obj[0:obj.size - 1]]
             X_test = std_scale.transform(X_test_raw) # Normalisar
             
-            neigh1 = KNeighborsClassifier(n_neighbors=1)
-            y_pred = neigh1.fit(X_train, y_train).predict(X_test)
-            if y_pred[0] == y_test:
-                correct1NN+=1
+            #neigh1 = KNeighborsClassifier(n_neighbors=1)
+            #y_pred = neigh1.fit(X_train, y_train).predict(X_test)
+            #if y_pred[0] == y_test:
+            #    correct1NN+=1
+            #    total1NN+=1
 
             clf = SVC()
             y_pred = clf.fit(X_train, y_train).predict(X_test)
             if y_pred[0] == y_test:
                 correctSVM+=1
+                totalSVM+=1
+                #print(y_test+" "+y_pred[0]) 
+            #else:   
+                #print(y_test+" "+y_pred[0])
 
         if correct1NN == 4:
             accuracy1NN+=1
         if correctSVM == 4:
             accuracySVM+=1
 
-    print("Acuracia 1NN = "+str(accuracy1NN / len(TEST_AUDIO_CAPTCHA_FOLDERS)))
-    print("Acuracia SVM = "+str(accuracySVM / len(TEST_AUDIO_CAPTCHA_FOLDERS)))
+    number_of_folders = len(TEST_AUDIO_CAPTCHA_FOLDERS)
+    number_of_characters = len(TEST_AUDIO_FILENAMES)
+    #print("Acuracia (captcha) 1NN = {0:.2f}%".format((accuracy1NN / number_of_folders)*100))
+    print("Acuracia (captcha) SVM = {0:.2f}%".format((accuracySVM / number_of_folders)*100))
+    #print("Acuracia (caracteres) 1NN = {0:.2f}%".format((total1NN / number_of_characters)*100))
+    print("Acuracia (caracteres) SVM = {0:.2f}%".format((totalSVM / number_of_characters)*100))
 
 
 def important_features() -> np.ndarray:
@@ -113,10 +146,11 @@ def important_features() -> np.ndarray:
     extraidas a partir da base de treino.
     """
     X, Y, std_scale = train()
-    rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1, random_state=42)
+    rnd_clf = RandomForestClassifier(n_estimators=1000, max_features=1, n_jobs=-1, random_state=42)
     rnd_clf.fit(X, Y)
-    print(rnd_clf.feature_importances_)
-    return rnd_clf.feature_importances_
+    importances = rnd_clf.feature_importances_
+    print(importances)
+    return importances
 
 
 def break_captcha():
