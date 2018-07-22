@@ -5,8 +5,6 @@ from math import fabs
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-tqdm.pandas()
 from sklearn import preprocessing
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
