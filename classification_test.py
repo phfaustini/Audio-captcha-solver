@@ -13,6 +13,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from spectrum import get_spectrum
+from sklearn import tree # dot -Tpng tree.dot -o tree.png
 
 
 SAMPLE_RATE = 44100
@@ -43,7 +44,6 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
 
     npstd = np.std(feature1, axis=1)
     npmedian = np.median(feature1, axis=1)
-    #delta = np.max(feature1) - np.min(feature1) # sem ele melhora
     feature1_flat = np.hstack((npmedian, npstd))
 
     feature2 = librosa.feature.zero_crossing_rate(y=data)
@@ -102,43 +102,68 @@ def train() -> tuple:
 def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler):
     accuracy1NN = 0
     accuracySVM = 0
+    accuracyTotal = 0
     total1NN = 0
     totalSVM = 0
+    total = 0
     for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
         correct1NN = 0
         correctSVM = 0
+        correct = 0
         for filename in os.listdir(folder):
             obj = extract_features(filename, folder)
             y_test = obj[obj.size - 1]
             X_test_raw = [obj[0:obj.size - 1]]
             X_test = std_scale.transform(X_test_raw) # Normalisar
             
-            #neigh1 = KNeighborsClassifier(n_neighbors=1)
-            #y_pred = neigh1.fit(X_train, y_train).predict(X_test)
-            #if y_pred[0] == y_test:
+            neigh1 = KNeighborsClassifier(n_neighbors=1)    #D, N
+            y_pred_1nn = neigh1.fit(X_train, y_train).predict(X_test)
+            #if y_pred_1nn[0] == y_test:
             #    correct1NN+=1
             #    total1NN+=1
+                #print(y_test+" "+y_pred[0]) 
+            #else:   
+            #    print(y_test+" "+y_pred[0])
 
             clf = SVC()
-            y_pred = clf.fit(X_train, y_train).predict(X_test)
-            if y_pred[0] == y_test:
-                correctSVM+=1
-                totalSVM+=1
+            y_pred_svm = clf.fit(X_train, y_train).predict(X_test)              
+            #if y_pred_svm[0] == y_test:
+            #    correctSVM+=1
+            #    totalSVM+=1
                 #print(y_test+" "+y_pred[0]) 
             #else:   
                 #print(y_test+" "+y_pred[0])
 
-        if correct1NN == 4:
-            accuracy1NN+=1
-        if correctSVM == 4:
-            accuracySVM+=1
+            y_pred = y_pred_svm[0]
+            if y_pred_svm[0] == 'd' or y_pred_svm[0] == 'm': # SVM erra muito essas
+                y_pred = y_pred_1nn[0]
+            if y_pred_1nn[0] == 'd' or y_pred_1nn[0] == 'm':
+                y_pred = y_pred_1nn[0]
+
+            if y_pred == y_test:
+                correct+=1
+                total+=1
+                print('V '+y_test+" "+y_pred[0])
+            else:
+                print('E '+y_test+" "+y_pred[0])
+        #if correct1NN == 4:
+        #    accuracy1NN+=1
+        #if correctSVM == 4:
+        #    accuracySVM+=1
+        
+            
+        if correct == 4:
+            accuracyTotal+=1
 
     number_of_folders = len(TEST_AUDIO_CAPTCHA_FOLDERS)
     number_of_characters = len(TEST_AUDIO_FILENAMES)
     #print("Acuracia (captcha) 1NN = {0:.2f}%".format((accuracy1NN / number_of_folders)*100))
-    print("Acuracia (captcha) SVM = {0:.2f}%".format((accuracySVM / number_of_folders)*100))
+    #print("Acuracia (captcha) SVM = {0:.2f}%".format((accuracySVM / number_of_folders)*100))
     #print("Acuracia (caracteres) 1NN = {0:.2f}%".format((total1NN / number_of_characters)*100))
-    print("Acuracia (caracteres) SVM = {0:.2f}%".format((totalSVM / number_of_characters)*100))
+    #print("Acuracia (caracteres) SVM = {0:.2f}%".format((totalSVM / number_of_characters)*100))
+    print("Acuracia (captcha) = {0:.2f}%".format((accuracyTotal / number_of_folders)*100))
+    print("Acuracia (caracteres) = {0:.2f}%".format((total / number_of_characters)*100))
+
 
 
 def important_features() -> np.ndarray:
@@ -159,4 +184,4 @@ def break_captcha():
 
 if __name__ == "__main__":
     break_captcha()
-    a=important_features()
+    #a=important_features()
