@@ -6,12 +6,10 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
-from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from spectrum import get_spectrum
-from sklearn import tree # dot -Tpng tree.dot -o tree.png
 
 
 SAMPLE_RATE = 44100
@@ -30,6 +28,8 @@ for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
     for f in os.listdir(folder):
         TEST_AUDIO_FILENAMES.append(folder+'/'+f)
 
+number_of_folders = len(TEST_AUDIO_CAPTCHA_FOLDERS)
+number_of_characters = len(TEST_AUDIO_FILENAMES)
 
 def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     data, _ = librosa.core.load(path +'/'+ audio_filename, sr=SAMPLE_RATE)
@@ -96,17 +96,81 @@ def train() -> tuple:
     X_train = std_scale.transform(X_train_raw)
     return X_train, np.array(y_train), std_scale
 
+def preliminar_test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler):
+    corretos_svm = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    corretos_1nn = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    errados_svm  = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    errados_1nn  = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    elementos    = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
 
-def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler):
     accuracy1NN = 0
     accuracySVM = 0
-    accuracyTotal = 0
     total1NN = 0
     totalSVM = 0
-    total = 0
     for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
         correct1NN = 0
         correctSVM = 0
+        for filename in os.listdir(folder):
+            obj = extract_features(filename, folder)
+            y_test = obj[obj.size - 1]
+            X_test_raw = [obj[0:obj.size - 1]]
+            X_test = std_scale.transform(X_test_raw) # Normalisar
+            
+            elementos[y_test] += 1
+            
+            neigh1 = KNeighborsClassifier(n_neighbors=1)
+            y_pred = neigh1.fit(X_train, y_train).predict(X_test)
+            if y_pred[0] == y_test:
+                correct1NN+=1
+                total1NN+=1
+                corretos_1nn[y_test] += 1
+            else:
+                errados_1nn[y_test] += 1
+
+            clf = SVC()
+            y_pred = clf.fit(X_train, y_train).predict(X_test)
+            if y_pred[0] == y_test:
+                correctSVM+=1
+                totalSVM+=1
+                corretos_svm[y_test] += 1
+            else:
+                errados_svm[y_test] += 1
+
+        if correct1NN == 4:
+            accuracy1NN+=1
+        if correctSVM == 4:
+            accuracySVM+=1
+
+    print("Acuracia SVM (captcha)    = {0:.2f}%".format((accuracySVM / number_of_folders)*100))
+    print("Acuracia SVM (caracteres) = {0:.2f}%".format((totalSVM / number_of_characters)*100))
+    print("Acuracia 1NN (captcha)    = {0:.2f}%".format((accuracy1NN / number_of_folders)*100))
+    print("Acuracia 1NN (caracteres) = {0:.2f}%".format((total1NN / number_of_characters)*100))
+    print("RESULTADOS SVM")
+    print("Caractere   Acertos          Taxa")
+    for k, v in corretos_svm.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
+    print("Caractere   Erros            Taxa")
+    for k, v in errados_svm.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
+        
+    print("")
+    print("RESULTADOS 1NN")
+    print("Caractere   Acertos          Taxa")
+    for k, v in corretos_1nn.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
+    print("Caractere   Erros            Taxa")
+    for k, v in errados_1nn.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
+
+
+def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler):
+    errados   = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    corretos  = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+    elementos = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
+
+    accuracyTotal = 0
+    total = 0
+    for folder in TEST_AUDIO_CAPTCHA_FOLDERS:
         correct = 0
         for filename in os.listdir(folder):
             obj = extract_features(filename, folder)
@@ -114,23 +178,14 @@ def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data
             X_test_raw = [obj[0:obj.size - 1]]
             X_test = std_scale.transform(X_test_raw) # Normalisar
             
+            elementos[y_test] += 1
+                
+                
             neigh1 = KNeighborsClassifier(n_neighbors=1)    #D, N
             y_pred_1nn = neigh1.fit(X_train, y_train).predict(X_test)
-            #if y_pred_1nn[0] == y_test:
-            #    correct1NN+=1
-            #    total1NN+=1
-                #print(y_test+" "+y_pred[0]) 
-            #else:   
-            #    print(y_test+" "+y_pred[0])
 
             clf = SVC()
-            y_pred_svm = clf.fit(X_train, y_train).predict(X_test)              
-            #if y_pred_svm[0] == y_test:
-            #    correctSVM+=1
-            #    totalSVM+=1
-                #print(y_test+" "+y_pred[0]) 
-            #else:   
-                #print(y_test+" "+y_pred[0])
+            y_pred_svm = clf.fit(X_train, y_train).predict(X_test)
 
             y_pred = y_pred_svm[0]
             if y_pred_svm[0] == 'd' or y_pred_svm[0] == 'm': # SVM erra muito essas
@@ -141,26 +196,23 @@ def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data
             if y_pred == y_test:
                 correct+=1
                 total+=1
-                print('V '+y_test+" "+y_pred[0])
+                corretos[y_test] += 1
             else:
-                print('E '+y_test+" "+y_pred[0])
-        #if correct1NN == 4:
-        #    accuracy1NN+=1
-        #if correctSVM == 4:
-        #    accuracySVM+=1
-        
+                errados[y_test] += 1
             
         if correct == 4:
             accuracyTotal+=1
 
-    number_of_folders = len(TEST_AUDIO_CAPTCHA_FOLDERS)
-    number_of_characters = len(TEST_AUDIO_FILENAMES)
-    #print("Acuracia (captcha) 1NN = {0:.2f}%".format((accuracy1NN / number_of_folders)*100))
-    #print("Acuracia (captcha) SVM = {0:.2f}%".format((accuracySVM / number_of_folders)*100))
-    #print("Acuracia (caracteres) 1NN = {0:.2f}%".format((total1NN / number_of_characters)*100))
-    #print("Acuracia (caracteres) SVM = {0:.2f}%".format((totalSVM / number_of_characters)*100))
     print("Acuracia (captcha) = {0:.2f}%".format((accuracyTotal / number_of_folders)*100))
     print("Acuracia (caracteres) = {0:.2f}%".format((total / number_of_characters)*100))
+    print("")    
+    print("RESULTADOS")
+    print("Caractere  Acertos           Taxa")
+    for k, v in corretos.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
+    print("Caractere  Erros             Taxa")
+    for k, v in errados.items():
+        print(k,"         ",v,"/",elementos[k], "        ", "{0:.2f}%".format((v/elementos[k])*100))
 
 
 
