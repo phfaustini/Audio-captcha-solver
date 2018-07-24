@@ -16,8 +16,6 @@ fx = (
 
 #denoise = AudioEffectsChain().lowpass(3000)
 
-SHOW_PLOTS = False
-
 def remove_until(l, until):
     t = list(l)
     n = len(t)
@@ -37,7 +35,7 @@ def remove_until(l, until):
 def extract_labels(filename):
     return os.path.splitext(os.path.basename(filename))[0]
 
-def trim(filename, output):
+def trim(filename, output, SHOW_PLOTS=False):
     y, sr = librosa.load(filename)
 
     FOLGA = int(sr)
@@ -59,6 +57,7 @@ def trim(filename, output):
         librosa.display.waveplot(y)
         plt.vlines(peak_times, -1, 1, color='red', linestyle='--',linewidth=8, alpha=0.9, label='Segment boundaries')
         plt.show()
+        return
 
     labels = extract_labels(filename)
 

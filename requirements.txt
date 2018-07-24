@@ -1,9 +1,0 @@
-# ffmpeg
-# Anaconda python (python >= 3.5)
-numpy>=1.13.3
-pandas>=0.20.3
-scikit-learn>=0.19.1
-scipy==1.1.0 # Senao da erro na funcao find_peaks
-librosa>=0.6.1
-matplotlib>=1.5.3
-tqdm>=4.23.4
