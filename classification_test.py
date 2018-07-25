@@ -54,15 +54,7 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     feature4 = librosa.feature.spectral_centroid(data)
     feature4_flat = np.hstack((np.median(feature4), np.std(feature4)))
 
-
     feature5_flat = get_spectrum(data)
-
-    #plt.figure(figsize=(10, 4))
-    #librosa.display.specshow(feature1, x_axis='time')
-    #plt.colorbar()
-    #plt.title(label)
-    #plt.tight_layout()
-    #plt.show()
     
     features = pd.Series(np.hstack((feature1_flat, feature2_flat, feature3_flat, 
                                     feature4_flat, feature5_flat, label)))
@@ -84,23 +76,6 @@ def train() -> tuple:
     std_scale = preprocessing.StandardScaler().fit(X_train_raw) 
     X_train = std_scale.transform(X_train_raw)
     return X_train, np.array(y_train), std_scale
-
-    #def f(x, pos):
-    #    return '%.2f' % (x)
-    #x = np.arange(2)
-    #formatter = FuncFormatter(f)
-    
-    #fig, ax = plt.subplots()
-    #ax.yaxis.set_major_formatter(formatter)
-    #plt.bar(x, [    (accuracySVM / number_of_folders)*100,   (accuracy1NN / number_of_folders)*100  ])
-    #plt.xticks(x, ('Acuracia SVM (captcha)', 'Acuracia 1NN (captcha)'))
-    #plt.show()
-
-    #fig, ax = plt.subplots()
-    #ax.yaxis.set_major_formatter(formatter)
-    #plt.bar(x, [    (totalSVM / number_of_characters)*100,  (total1NN / number_of_characters)*100  ])
-    #plt.xticks(x, ('Acuracia SVM (caracteres)', 'Acuracia 1NN (caracteres)'))
-    #plt.show()
 
 
 def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler) -> tuple:
