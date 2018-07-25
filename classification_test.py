@@ -1,4 +1,5 @@
 import numpy as np
+from pysndfx import AudioEffectsChain
 import pandas as pd
 import os
 from math import fabs
@@ -10,7 +11,6 @@ from sklearn import preprocessing
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from spectrum import get_spectrum
 
 SAMPLE_RATE = 44100
 TRAINING_OUTPUT = 'output_training/'
@@ -32,7 +32,41 @@ number_of_folders = len(TEST_AUDIO_CAPTCHA_FOLDERS)
 number_of_characters = len(TEST_AUDIO_FILENAMES)
 
 
-def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
+
+
+def make_chain(low, high):
+    return (AudioEffectsChain()
+        .lowpass(high, 3.0)
+        .highpass(low, 3.0))
+
+sb = make_chain(20, 60)
+b = make_chain(60, 250)
+lm = make_chain(250, 500)
+m = make_chain(500, 2000)
+um = make_chain(2000, 4000)
+p = make_chain(4000, 6000)
+br = make_chain(6000, 20000)
+
+specs = [sb,b,lm,m,um,p,br]
+
+
+def get_spectrum(audio):
+    """Uso: chame a funcao get_spectrum. 
+
+    Ela retorna a intensidade média de cada um dos 7 espectros de frequência.
+    Será sempre um valor entre 0 e 1, normalmente mais próximo de 0 e acredito que
+    nunca acima de 0,5.
+    """    
+    return [np.mean(np.abs(spectrum(audio))) for spectrum in specs]
+
+
+
+def extract_features_librosa(audio_filename: str, path: str) -> pd.core.series.Series:
+    """
+    Extrai features dos áudios a partir da biblioteca librosa.
+    As features são então concatenadas em um vetor de atributos.
+    """
+
     data, _ = librosa.core.load(path +'/'+ audio_filename, sr=SAMPLE_RATE)
 
     label = audio_filename.split('.')[0].split('-')[-1]
@@ -68,7 +102,7 @@ def train() -> tuple:
     for sample in TRAINING_AUDIO_FILENAMES:
         folder = '/'.join(sample.split('/')[0:2])
         filename = sample.split('/')[-1]
-        obj = extract_features(filename, folder)
+        obj = extract_features_librosa(filename, folder)
         d = obj[0:obj.size - 1]
         l = obj[obj.size - 1]
         X_train_raw.append(d)
@@ -98,7 +132,7 @@ def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data
         correct1NN = 0
         correctSVM = 0
         for filename in os.listdir(folder):
-            obj = extract_features(filename, folder)
+            obj = extract_features_librosa(filename, folder)
             y_test = obj[obj.size - 1]
             X_test_raw = [obj[0:obj.size - 1]]
             X_test = std_scale.transform(X_test_raw)
