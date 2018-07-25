@@ -53,18 +53,9 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
 
     feature4 = librosa.feature.spectral_centroid(data)
     feature4_flat = np.hstack((np.median(feature4), np.std(feature4)))
-    
-    feature5 = librosa.feature.spectral_contrast(data)
-    feature5_flat = np.hstack((np.median(feature5), np.std(feature5)))
-
-    feature6 = librosa.feature.spectral_bandwidth(data)
-    feature6_flat = np.hstack((np.median(feature6), np.std(feature6)))
-
-    feature7 = librosa.feature.tonnetz(data)
-    feature7_flat = np.hstack((np.median(feature7), np.std(feature7)))
 
 
-    feature8_flat = get_spectrum(data)
+    feature5_flat = get_spectrum(data)
 
     #plt.figure(figsize=(10, 4))
     #librosa.display.specshow(feature1, x_axis='time')
@@ -74,8 +65,7 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     #plt.show()
     
     features = pd.Series(np.hstack((feature1_flat, feature2_flat, feature3_flat, 
-                                    feature4_flat, feature5_flat, feature6_flat, 
-                                    feature7_flat, feature8_flat, label)))
+                                    feature4_flat, feature5_flat, label)))
     return features
  
 
