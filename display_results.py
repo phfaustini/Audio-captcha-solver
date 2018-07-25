@@ -1,4 +1,4 @@
-from IPython.display import display, Markdown
+from IPython.display import Markdown
 
 def resultados_caracteres(title: str, correct: dict, wrong: dict, elements: dict):
     print("RESULTADOS "+title)
@@ -9,7 +9,7 @@ def resultados_caracteres(title: str, correct: dict, wrong: dict, elements: dict
         lines.append("|"+letter+" |"+str(correct[letter])+"/"+str(elements[letter])+" ("+"{0:.2f}%".format((correct[letter]/elements[letter])*100)+")|"+str(wrong[letter])+"/"+str(elements[letter])+" ("+"{0:.2f}%".format((wrong[letter]/elements[letter])*100) +")|"   )
     lines = "\n".join(lines)
     text = header+line+lines
-    display(Markdown(text))
+    return (Markdown(text))
 
 
 def resultados_acuracia(title: str, info: list):
@@ -21,4 +21,4 @@ def resultados_acuracia(title: str, info: list):
         lines.append("|"+l[0]+"      | "+l[1]+"%|")
     lines = "\n".join(lines)
     text = header+line+lines
-    display(Markdown(text))
+    return (Markdown(text))
