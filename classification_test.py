@@ -12,6 +12,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
+from count_peaks import count_peaks
+
 SAMPLE_RATE = 44100
 TRAINING_OUTPUT = 'output_training/'
 TRAINING_AUDIO_CAPTCHA_FOLDERS = [TRAINING_OUTPUT+i for i in os.listdir(TRAINING_OUTPUT)]
@@ -90,8 +92,10 @@ def extract_features_librosa(audio_filename: str, path: str) -> pd.core.series.S
 
     feature5_flat = get_spectrum(data)
     
+    feature6_flat = count_peaks(data)
+    
     features = pd.Series(np.hstack((feature1_flat, feature2_flat, feature3_flat, 
-                                    feature4_flat, feature5_flat, label)))
+                                    feature4_flat, feature5_flat, feature6_flat, label)))
     return features
  
 
