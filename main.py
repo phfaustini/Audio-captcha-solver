@@ -1,8 +1,8 @@
 import trim_peaks as trim
 import os
 
-TRAINING_FOLDER = './fase_1/base_treinamento_I/'
-TEST_FOLDER = './fase_1/base_validacao_I/'
+TRAINING_FOLDER = './fase_II/base_treinamento_II/'
+TEST_FOLDER = './fase_II/base_validacao_II/'
 TRAINING_OUTPUT = './output_training/'
 TEST_OUTPUT = './output_test/'
 
@@ -28,6 +28,10 @@ def create_folder_structure():
 
 
 if __name__ == "__main__":
-    create_folder_structure()
-    from classification_test import break_captcha
-    break_captcha()
+    #create_folder_structure()
+    from classification_test import train, test
+    from display_results import resultados_acuracia, resultados_caracteres
+    X_train, y_train, std_scale = train()
+    captchas_total, acuracia_caracteres, errados,corretos, elementos = test(X_train, y_train, std_scale)
+    print("Accuracia captchas: {}".format(captchas_total))
+    print("Accuracia caracteres: {}".format(acuracia_caracteres))
