@@ -16,8 +16,6 @@ from sklearn.ensemble import VotingClassifier
 
 from count_peaks import count_peaks
 
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 SAMPLE_RATE = 44100
 TRAINING_OUTPUT = 'output_training/'
@@ -62,6 +60,7 @@ def get_spectrum(audio):
     """
     return [np.mean(np.abs(spectrum(audio))) for spectrum in specs]
 
+
 def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     """
     Extrai features dos áudios a partir da biblioteca librosa.
@@ -91,6 +90,7 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
                                     feature5_flat, feature6_flat, label)))
     return features
 
+
 def train() -> tuple:
     X_train_raw = []
     y_train = []
@@ -107,15 +107,17 @@ def train() -> tuple:
     return X_train, np.array(y_train), std_scale
 
 
-def create_classifier():
+def create_classifier() -> VotingClassifier:
         clf1 = KNeighborsClassifier(n_neighbors=1)
-        clf2 = RandomForestClassifier(random_state=100)
-        clf3 = SVC(random_state=100)
-        clf4 = LinearDiscriminantAnalysis()
-        clf5 = KNeighborsClassifier(n_neighbors=3)
+        clf2 = SVC(random_state=100)
+        clf3 = LinearDiscriminantAnalysis()
+        clf4 = KNeighborsClassifier(n_neighbors=3)
 
         #creates ensemble
-        return VotingClassifier(estimators=[('1nn', clf1), ('rf', clf2), ('svm', clf3), ('lda', clf4), ('5nn', clf5)], voting='hard')
+        return VotingClassifier(estimators=[('1nn', clf1), ('svm', clf2), ('lda', clf3), ('3nn', clf4)], 
+                                weights=[1,1,2,1], 
+                                n_jobs=-1) # Parallel in each core
+
 
 def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler) -> tuple:
     errados      = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
