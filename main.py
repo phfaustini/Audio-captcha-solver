@@ -1,10 +1,8 @@
-import trim_peaks as trim
 import os
 
-TRAINING_FOLDER = './fase_II/base_treinamento_II/'
-TEST_FOLDER = './fase_II/base_validacao_II/'
-TRAINING_OUTPUT = './output_training/'
-TEST_OUTPUT = './output_test/'
+import preprocessing as trim
+from constants import *
+
 
 def create_folder_structure():
     """Cria a estrutura de pastas
@@ -28,10 +26,9 @@ def create_folder_structure():
 
 
 if __name__ == "__main__":
-    #create_folder_structure()
-    from classification_test import train, test
-    from display_results import resultados_acuracia, resultados_caracteres
+    create_folder_structure()
+    from model import train, test
     X_train, y_train, std_scale = train()
-    captchas_total, acuracia_caracteres, errados,corretos, elementos = test(X_train, y_train, std_scale)
+    captchas_total, acuracia_caracteres, errados, corretos, elementos = test(X_train, y_train, std_scale)
     print("Accuracia captchas: {}".format(captchas_total))
     print("Accuracia caracteres: {}".format(acuracia_caracteres))
