@@ -73,6 +73,8 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
 
     feature6_flat = _count_peaks(data)
 
+    sc = librosa.feature.spectral_contrast(y=data, sr=SAMPLE_RATE)
+
     features = pd.Series(np.hstack((feature1_flat, feature2_flat,
-                                    feature5_flat, feature6_flat, label)))
+                                    feature5_flat, feature6_flat, [np.mean(sc), np.std(sc)], label)))
     return features

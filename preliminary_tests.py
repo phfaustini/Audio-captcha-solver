@@ -14,7 +14,7 @@ from transformation import *
 
 def individual_classifiers_results(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data.StandardScaler) -> tuple:
     elementos    = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
-    
+
     corretos_svm = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
     corretos_1nn = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
     errados_svm  = {'6':0, '7':0, 'a':0, 'b':0, 'c':0, 'd':0, 'h':0, 'm':0, 'n':0, 'x':0}
@@ -59,7 +59,7 @@ def individual_classifiers_results(X_train: np.ndarray, y_train: np.ndarray, std
             X_test = std_scale.transform(X_test_raw)
             elementos[y_test] += 1
 
-            
+
             y_pred_1nn = k1nn.predict(X_test)
             if y_pred_1nn[0] == y_test:
                 correct1NN+=1
@@ -74,7 +74,7 @@ def individual_classifiers_results(X_train: np.ndarray, y_train: np.ndarray, std
                 totalSVM+=1
                 corretos_svm[y_test] += 1
             else:
-                errados_svm[y_test] += 1 
+                errados_svm[y_test] += 1
 
             y_pred_3nn = k3nn.predict(X_test)
             if y_pred_3nn[0] == y_test:
@@ -91,7 +91,7 @@ def individual_classifiers_results(X_train: np.ndarray, y_train: np.ndarray, std
                 corretos_lda[y_test] += 1
             else:
                 errados_lda[y_test] += 1
-            
+
 
         if correct1NN == 4:
             accuracy1NN+=1
@@ -111,12 +111,12 @@ def individual_classifiers_results(X_train: np.ndarray, y_train: np.ndarray, std
     captchas_lda = (accuracyLDA / number_of_folders)*100
     caracteres_lda = (totalLDA / number_of_characters)*100
 
-    return (captchas_svm, caracteres_svm, 
+    return (captchas_svm, caracteres_svm,
             captchas_1nn, caracteres_1nn,
             captchas_3nn, caracteres_3nn,
             captchas_lda, caracteres_lda,
             elementos,
             corretos_svm,corretos_1nn,
-            errados_svm,errados_1nn,            
+            errados_svm,errados_1nn,
             corretos_lda,corretos_3nn,
             errados_lda,errados_3nn)
