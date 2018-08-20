@@ -84,7 +84,7 @@ def test(X_train: np.ndarray, y_train: np.ndarray, std_scale: preprocessing.data
 ############################################################################
 
 
-def get_final_model() -> tuple:
+def get_final_model():
     """
     Usa toda a base (treino + validação) disponível
     para treinar o modelo. Este é o modelo a ser 
@@ -127,7 +127,7 @@ def get_final_model() -> tuple:
     return eclf, std_scale
 
 
-def final_test(std_scale: preprocessing.data.StandardScaler, model=get_final_model()) -> tuple:
+def final_test(std_scale, model):
     wrong        = {'6': 0, '7': 0, 'a': 0, 'b': 0, 'c': 0, 'd': 0, 'h': 0, 'm': 0, 'n': 0, 'x': 0}
     correct      = {'6': 0, '7': 0, 'a': 0, 'b': 0, 'c': 0, 'd': 0, 'h': 0, 'm': 0, 'n': 0, 'x': 0}
     elements     = {'6': 0, '7': 0, 'a': 0, 'b': 0, 'c': 0, 'd': 0, 'h': 0, 'm': 0, 'n': 0, 'x': 0}
