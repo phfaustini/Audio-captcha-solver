@@ -60,9 +60,9 @@ def trim(filename, output, SHOW_PLOTS=False):
     if SHOW_PLOTS:
         peak_times = librosa.samples_to_time(peaks)
         plt.title(filename)
-        librosa.display.waveplot(fxy)
-        librosa.display.waveplot(y)
-        plt.vlines(peak_times, -1, 1, color='red', linestyle='--', linewidth=8, alpha=0.9, label='Segment boundaries')
+        librosa.display.waveplot(fxy, color='m')
+        librosa.display.waveplot(y, color='orange')
+        plt.vlines(peak_times, -1, 1, color='k', linestyle='--', linewidth=6, alpha=0.9, label='Segment boundaries')
         plt.show()
         return
 
