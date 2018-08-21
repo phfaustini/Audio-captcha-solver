@@ -13,6 +13,8 @@ from sklearn.model_selection import cross_val_score
 from transformation import *
 from constants import *
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 TRAINING_AUDIO_CAPTCHA_FOLDERS = [TRAINING_OUTPUT+i for i in os.listdir(TRAINING_OUTPUT)]
 def init_training_audio_filenames():
