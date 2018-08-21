@@ -55,13 +55,10 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
     As features são retornadas concatenadas em um vetor de atributos.
     """
     data, _ = librosa.core.load(path+'/'+audio_filename, sr=SAMPLE_RATE)
-
     label = audio_filename.split('.')[0].split('-')[-1]
 
     feature1_raw = librosa.feature.mfcc(data, sr=SAMPLE_RATE, n_mfcc=40)
-
     feature1 = np.array([list(map(fabs, sublist)) for sublist in feature1_raw]) # all > 0
-
     npstd = np.std(feature1, axis=1)
     npmedian = np.median(feature1, axis=1)
     feature1_flat = np.hstack((npmedian, npstd))
@@ -71,10 +68,17 @@ def extract_features(audio_filename: str, path: str) -> pd.core.series.Series:
 
     feature5_flat = _get_spectrum(data)
 
-    feature6_flat = _count_peaks(data)
+    #feature6_flat = _count_peaks(data)
 
     sc = librosa.feature.spectral_contrast(y=data, sr=SAMPLE_RATE)
 
+    rms = librosa.feature.rmse(data) # meio que uma media dos picos
+    rms_median = np.median(rms)
+    rms_mean = np.mean(rms)
+    rms_std = np.std(rms)
+
     features = pd.Series(np.hstack((feature1_flat, feature2_flat,
-                                    feature5_flat, feature6_flat, [np.mean(sc), np.std(sc)], label)))
+                                    feature5_flat, [np.mean(sc), np.std(sc)], 
+                                    rms_median, rms_mean, rms_std, 
+                                    label)))
     return features
